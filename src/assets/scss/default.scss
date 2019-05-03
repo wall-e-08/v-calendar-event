@@ -1,0 +1,23 @@
+@import "./variables";
+
+body {
+    font-family: 'Courier New', Courier, monospace;
+}
+
+h1 {
+    font-size: 32px;
+}
+
+.calendar-container {
+    background-color: $color-weekday;
+}
+
+.display-grid {
+    display: grid !important;
+}
+.grid-col-7 {
+    grid-template-columns: auto auto auto auto auto auto auto;
+}
+
+
+
