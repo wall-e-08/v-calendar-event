@@ -23,14 +23,16 @@
               <!-- <button class="btn btn-success">zz</button> -->
             </div>
           </div>
-          <div class="calendar-container mt-2">
-            <div class="display-grid grid-col-7 day-container">
-              <div v-bind:key="key" v-for="(wk, key) in week_day">{{ wk }}</div>
-            </div>
-            <div class="display-grid grid-col-7">
-              <div class="text-secondary" v-bind:key="'m-'+key" v-for="(d, key) in prev_month_end_days">{{ d }}</div>
-              <div v-bind:key="key" v-for="(d, key) in month_total_days">{{ d }}</div>
-              <div class="text-secondary" v-bind:key="'nm'+key" v-for="(d, key) in next_month_start_days">{{ d }}</div>
+          <div class="row">
+            <div class="col-12">
+              <div class="calendar-container table-warning mt-2">
+                <div class="display-grid grid-col-7">
+                  <div class="text-center py-1 border-left border-bottom bg-warning" v-bind:key="'w-'+key" v-for="(wk, key) in week_day">{{ wk }}</div>
+                  <div class="text-secondary pb-5 pl-2 pt-1 border border-light" v-bind:key="'prv-'+key" v-for="(d, key) in prev_month_end_days">{{ d }}</div>
+                  <div class="pb-5 pl-2 pt-1 border border-light" v-bind:key="key" v-for="(d, key) in month_total_days">{{ d }}</div>
+                  <div class="text-secondary pb-5 pl-2 pt-1 border border-light" v-bind:key="'nxt'+key" v-for="(d, key) in next_month_start_days">{{ d }}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -121,7 +123,6 @@ export default {
       for (let i = prev_month_total_days - _t.month_starts_at; i < prev_month_total_days; i++) {
         prev_month_last_days.push(i);
       }
-      // console.log(`Starts: ${_t.month_starts_at}; prev: ${prev_month_last_days}`)
       return prev_month_last_days;
     }
   },

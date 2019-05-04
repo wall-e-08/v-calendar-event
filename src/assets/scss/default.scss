@@ -9,14 +9,14 @@ h1 {
 }
 
 .calendar-container {
-    background-color: $color-weekday;
+    // background-color: $color-weekday;
 }
 
 .display-grid {
     display: grid !important;
 }
 .grid-col-7 {
-    grid-template-columns: auto auto auto auto auto auto auto;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 
 
