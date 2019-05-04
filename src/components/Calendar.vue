@@ -26,12 +26,29 @@
           <div class="row">
             <div class="col-12">
               <div class="calendar-container table-warning mt-2">
-                <div class="display-grid grid-col-7">
-                  <div class="text-center py-1 border-left border-bottom bg-warning" v-bind:key="'w-'+key" v-for="(wk, key) in week_day">{{ wk }}</div>
-                  <div class="text-secondary pb-5 pl-2 pt-1 border border-light" v-bind:key="'prv-'+key" v-for="(d, key) in prev_month_end_days">{{ d }}</div>
-                  <div class="pb-5 pl-2 pt-1 border border-light" v-bind:key="key" v-for="(d, key) in month_total_days">{{ d }}</div>
-                  <div class="text-secondary pb-5 pl-2 pt-1 border border-light" v-bind:key="'nxt'+key" v-for="(d, key) in next_month_start_days">{{ d }}</div>
-                </div>
+                <table class="table table-fixed">
+                  <tr>
+                    <th class="bg-warning p-0">
+                      <table class="table table-borderless table-fixed mb-0">
+                        <tr>
+                          <td class="text-center py-1" v-bind:key="'w-'+key" v-for="(wk, key) in week_day">{{ wk.substring(0,3) }}</td>
+                        </tr>
+                      </table>
+                    </th>
+                  </tr>
+                  <tr>
+                    <td class="p-0">
+                      <div class="month-dates">
+                        <table class="table mb-0 table-fixed">
+                          <tr v-bind:key="key" v-for="(wk_arr, key) in all_month_days_arr">
+                              <th :class="'pb-5 pl-2 pt-1 border border-light date-value ' + (d.type == 'current' ? '' : 'text-secondary')"
+                                  v-bind:key="key" v-for="(d, key) in wk_arr" :data-type="d.type">{{ d.val }}</th>
+                          </tr>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
               </div>
             </div>
           </div>
@@ -87,7 +104,7 @@ export default {
     month_str: function () {
       return this.months[this.current_month]
     },
-    month_total_days: function () {
+    current_month_total_days: function () {
       let _t = this;
       let d = new Date(_t.current_year, _t.current_month + 1, 0);
       return d.getDate();
@@ -105,8 +122,8 @@ export default {
     },
     next_month_start_days: function () {
       let _t = this;
-      let last_day_of_current_month = new Date(_t.current_year, _t.current_month, _t.month_total_days);
-      let month_weeks = Math.ceil((_t.month_total_days + _t.month_starts_at)/7);
+      let last_day_of_current_month = new Date(_t.current_year, _t.current_month, _t.current_month_total_days);
+      let month_weeks = Math.ceil((_t.current_month_total_days + _t.month_starts_at)/7);
 
       if (month_weeks === 6)
         return 7 - last_day_of_current_month.getDay() - 1;
@@ -117,16 +134,113 @@ export default {
     },
     prev_month_end_days: function () {
       let _t = this;
-      let prev_month_total_days = new Date(_t.current_year, _t.current_month, 0).getDate();
+      let prev_current_month_total_days = new Date(_t.current_year, _t.current_month, 0).getDate();
       let prev_month_last_days = [];
 
-      for (let i = prev_month_total_days - _t.month_starts_at; i < prev_month_total_days; i++) {
-        prev_month_last_days.push(i);
+      for (let i = prev_current_month_total_days - _t.month_starts_at; i < prev_current_month_total_days; i++) {
+        prev_month_last_days.push(i+1); // index starts from 0
       }
       return prev_month_last_days;
-    }
+    },
+    all_month_days_arr: function () {
+      // prev_month_end_days
+      // current_month_total_days
+      // next_month_start_days
+      let _t = this;
+      let arr = [];
+
+      for(let i=0; i<6; i++) {
+        let child_arr = []
+        for(let j=0; j<7; j++) {
+          if (i === 0) {  // for first week
+            if (j < _t.prev_month_end_days.length)
+              child_arr.push({
+                type: "prev",
+                val: _t.prev_month_end_days[j]
+              });
+            else {
+              child_arr.push({
+                type: "current",
+                val: j - _t.prev_month_end_days.length + 1,
+              });
+            }
+          } else if (i < 4)  {  // for week 2 to 4
+            // this whole loop is only for current month
+            child_arr.push({
+              type: "current",
+              val: arr[i-1][6].val + j+1,
+            });
+          } else { // for week 5 & 6
+            let current_month_remaining_days = _t.current_month_total_days - arr[i-1][6].val;
+            let month_end_week = (_t.current_month_total_days - arr[3][6].val) >= 7 ? 6 : 5; // current month ending week number (value: i+1)
+            
+            if (i === 4) {
+              // two logics: month ends in 5th week & ends in 6th
+              if (month_end_week == 5) {
+                // current month ends in 5th week (2 types of date will be showing)
+                if ((current_month_remaining_days - j) > 0) {
+                  // current month still running
+                  child_arr.push({
+                    type: "current",
+                    val: arr[i-1][6].val + j+1,
+                  });
+                  // console.log(`5TH current: ${arr[i-1][6].val + j+1}`);
+                } else {
+                  // proceed to next month
+                  child_arr.push({
+                    type: "next",
+                    val: j+1 - current_month_remaining_days,
+                  });
+                  // console.log(`5th next: ${j+1 - current_month_remaining_days}`);
+                }
+              } else {
+                // only current month will be shown in 5th week
+                child_arr.push({
+                  type: "current",
+                  val: arr[i-1][6].val + j+1,
+                });
+                // console.log(`5th current: ${arr[i-1][6].val + j+1}`);
+              }
+            } else if (i === 5) {
+              // two logics: month ends in 6th week & already ended
+              if (month_end_week == 6) {
+                // current month ends in 6th week
+                // current_month_remaining_days = _t.current_month_total_days - arr[4][6].val;
+                if ((current_month_remaining_days - j) > 0) {
+                  // current month still running
+                  child_arr.push({
+                    type: "current",
+                    val: arr[i-1][6].val + j+1,
+                  });
+                  // console.log(`6th current: ${arr[i-1][6].val + j+1}`);
+                } else {
+                  // proceed to next month
+                  child_arr.push({
+                    type: "next",
+                    val: j+1 - current_month_remaining_days,
+                  });
+                  // console.log(`6th next: ${j+1 - current_month_remaining_days}`);
+                }
+              } else {
+                // current month already ended in 5th week
+                  child_arr.push({
+                    type: "next",
+                    val: arr[i-1][6].val + j+1,
+                  });
+                // console.log(`6th next: ${arr[i-1][6].val + j+1}`);
+              }
+            }
+          }
+        }
+        arr.push(child_arr);
+      }
+      return arr;
+    },
   },
   methods: {
+    range: function(start, end) {
+      return Array.apply(0, Array(end)).map((el, i) => i + start);
+    },
     prev_month: function () {
       let _t = this;
       _t.current_date = new Date(_t.current_year, _t.current_month - 1, 1);
