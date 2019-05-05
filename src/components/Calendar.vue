@@ -47,6 +47,9 @@
                           <!-- <tr>
                             <td class="bg-success p-0" colspan="3">test</td>
                           </tr> -->
+                          <tr>
+                            <td>{{ events_by_week }}</td>
+                          </tr>
                         </table>
                       </div>
                     </td>
@@ -62,6 +65,8 @@
 </template>
 
 <script>
+import json_data from '../data/test.json'
+
 export default {
   name: "SimpleCalendar",
   delimiters: ["[[", "]]"],
@@ -101,7 +106,6 @@ export default {
       period_count: 8,
       break_after: 4,
       current_date: new Date(),
-      events_by_week: [],
     };
   },
   computed: {
@@ -260,6 +264,25 @@ export default {
       }
       return arr;
     },
+    events_by_week: function () {
+      let events_arr = [], _t = this,
+          start_date, end_date,
+          date_split, data_date;
+
+      for (let i = 0; i < _t.all_month_days_arr.length; i++) {
+        start_date = new Date(_t.all_month_days_arr[i][0].date);
+        end_date = new Date(_t.all_month_days_arr[i][6].date);  // 7 days in a week
+        events_arr.push(
+          json_data.filter(function(each_data){
+            date_split = each_data.date.split('/').map((a) => parseInt(a));
+            data_date = new Date(date_split[2], date_split[0]-1, date_split[1]); // format was m/d/Y
+            return data_date >= start_date && data_date <= end_date;
+          })
+        );
+      }
+      console.log(events_arr);
+      return events_arr;
+    },
   },
   methods: {
     range: function(start, end) {
@@ -285,7 +308,7 @@ export default {
       this.current_date = new Date();
     },
     get_date_string: function (date_obj) {
-      return `${date_obj.getDate()}-${date_obj.getMonth()+1}-${date_obj.getFullYear()}`
+      return `${date_obj.getFullYear()}-${date_obj.getMonth()+1}-${date_obj.getDate()}`
     }
   },
 };
