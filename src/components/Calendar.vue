@@ -38,17 +38,31 @@
                   </tr>
                   <tr>
                     <td class="p-0">
-                      <div class="month-dates">
-                        <table class="table mb-0 table-fixed" v-bind:key="key" v-for="(wk_arr, key) in all_month_days_arr">
+                      <div class="position-relative month-dates" v-bind:key="key" v-for="(wk_arr, key) in all_month_days_arr">
+                        <table class="table mb-0 table-fixed">
                           <tr>
                               <td :class="'p-0 date-value ' + (d.type == 'current' ? '' : 'text-secondary')"
                                   v-bind:key="key" v-for="(d, key) in wk_arr" :data-type="d.type" :data-date="d.date">{{ d.val }}</td>
                           </tr>
-                          <!-- <tr>
-                            <td class="bg-success p-0" colspan="3">test</td>
-                          </tr> -->
+                        </table>
+                        <table class="table mb-0 table-fixed position-absolute event-table">
                           <tr>
-                            <td>{{ events_by_week }}</td>
+                            <td class="p-0 event-by-day" v-bind:key="'empty-'+key21" v-for="(events, key21) in events_by_week[key]"></td>
+                          </tr>
+                          <tr>
+                              <td class="p-0 date-value event-by-day"
+                                  v-bind:key="key2" v-for="(events, key2) in events_by_week[key]">
+                                <template v-for="(event, key3) in events">
+                                  <b-button variant="success" size="sm" v-b-modal="'modal-'+event.date.replace(/\//g,'-')+key3" :key="'btn-'+key3">{{ event.date }}</b-button>
+                                  <b-modal :id="'modal-'+event.date.replace(/\//g,'-')+key3" :key="'modal-'+key3" :title="event.title">
+                                    <p class="my-4">TITLE: {{ event.title }}</p>
+                                    <p class="my-4">DATE: {{ event.date.replace(/\//g, '-') }}</p>
+                                    <p class="my-4">START TIME: {{ event.start_time }}</p>
+                                    <p class="my-4">END TIME: {{ event.end_time }}</p>
+                                    <p class="my-4">DESCRIPTION: {{ event.description }}</p>
+                                  </b-modal>
+                                </template>
+                              </td>
                           </tr>
                         </table>
                       </div>
@@ -265,22 +279,24 @@ export default {
       return arr;
     },
     events_by_week: function () {
-      let events_arr = [], _t = this,
-          start_date, end_date,
-          date_split, data_date;
+      let _t = this,
+          events_arr = [], ev_arr_inside = [],
+          now_date, date_split, data_date;
 
       for (let i = 0; i < _t.all_month_days_arr.length; i++) {
-        start_date = new Date(_t.all_month_days_arr[i][0].date);
-        end_date = new Date(_t.all_month_days_arr[i][6].date);  // 7 days in a week
-        events_arr.push(
-          json_data.filter(function(each_data){
-            date_split = each_data.date.split('/').map((a) => parseInt(a));
-            data_date = new Date(date_split[2], date_split[0]-1, date_split[1]); // format was m/d/Y
-            return data_date >= start_date && data_date <= end_date;
-          })
-        );
+        ev_arr_inside = [];
+        for (let j = 0; j < _t.all_month_days_arr[i].length; j++) {
+          now_date = new Date(_t.all_month_days_arr[i][j].date);
+          ev_arr_inside.push(
+            json_data.filter(function(each_data){
+              date_split = each_data.date.split('/').map((a) => parseInt(a));
+              data_date = new Date(date_split[2], date_split[0]-1, date_split[1]); // format was m/d/Y
+              return data_date.getTime() == now_date.getTime();
+            })
+          )
+        }
+        events_arr.push(ev_arr_inside);
       }
-      console.log(events_arr);
       return events_arr;
     },
   },
@@ -317,7 +333,18 @@ export default {
 
 <style lang="scss" scoped>
 .date-value {
-    height: 110px;
-    border-left: 1px solid #fd7;
+  height: 110px;
+  border-left: 1px solid #fd7;
+}
+.event-by-day{
+  height: 25px;
+  border: none !important;
+  .btn{
+    font-size: 11px;
+  }
+}
+.event-table {
+  top: 0;
+  left: 0;
 }
 </style>
